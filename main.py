@@ -4,15 +4,18 @@ from langchain_community.document_loaders import PDFMinerLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 
+# Initialize the ChromaDB HTTP client
 client = chromadb.HttpClient(host="localhost", port=3000)
 
 
+# Create a collection for a user in ChromaDB
 def create_user_collection(user_id):
     collection_name = f"user_{user_id}_collection"
     client.create_collection(collection_name)
     return collection_name
 
 
+# Extract metadata from a PDF file
 def extract_metadata_from_pdf(pdf_path):
     with open(pdf_path, 'rb') as file:
         reader = PdfReader(file)
@@ -21,6 +24,7 @@ def extract_metadata_from_pdf(pdf_path):
         return metadata
 
 
+# Extract text content from a PDF file using PDFMinerLoader
 def extract_text_from_pdf(pdf_path):
     loader = PDFMinerLoader(pdf_path)
     documents = loader.load()
@@ -28,6 +32,7 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 
+# Generate embeddings for text chunks extracted from a PDF
 def generate_embeddings(pdf_path):
     text = extract_text_from_pdf(pdf_path)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
@@ -37,10 +42,11 @@ def generate_embeddings(pdf_path):
     return chunks, embeddings
 
 
+# Save the embeddings and metadata to a user's collection in ChromaDB
 def save_embeddings(user_id, book_id, pdf_path):
     collection_name = f"user_{user_id}_collection"
 
-    # Check if collection exists
+    # Check if the collection exists, create if not
     existing_collections = client.list_collections()
     if collection_name not in [collection.name for collection in existing_collections]:
         collection = client.create_collection(collection_name)
@@ -60,6 +66,7 @@ def save_embeddings(user_id, book_id, pdf_path):
     return {f'Successfully saved embeddings and metadata to Chroma for user {user_id} and book {book_id}'}
 
 
+# Main function to execute the save_embeddings function with example parameters
 if __name__ == "__main__":
     save_embeddings(user_id="123456",
                     book_id="book_678901",
