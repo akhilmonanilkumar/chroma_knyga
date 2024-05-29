@@ -16,7 +16,7 @@ class RedisChatManager:
         query (str): The user's query.
         response (str): The assistant's response.
         """
-        chat_key = f"user:{user_id}:chats"
+        chat_key = f"redis:{user_id}:chats"
 
         # Check if the chat history for the user exists
         if not self.client.exists(chat_key):
@@ -51,7 +51,7 @@ class RedisChatManager:
         Returns:
         dict: A dictionary containing all chat histories for the user, with chat IDs as keys.
         """
-        chat_key = f"user:{user_id}:chats"
+        chat_key = f"redis:{user_id}:chats"
 
         # Check if the chat history for the user exists
         if self.client.exists(chat_key):
@@ -76,7 +76,7 @@ class RedisChatManager:
         Returns:
         dict or None: The chat history for the specified chat session, or None if not found.
         """
-        chat_key = f"user:{user_id}:chats"
+        chat_key = f"redis:{user_id}:chats"
 
         # Check if the chat history for the user exists
         if self.client.exists(chat_key):
@@ -84,5 +84,8 @@ class RedisChatManager:
             chat_data = self.client.hget(chat_key, chat_id)
             if chat_data:
                 # Decode and parse the chat data
-                return json.loads(chat_data.decode("utf-8"))
+                return json.loads(chat_data)
         return {}
+
+    def clear_database(self):
+        self.client.flushdb()
