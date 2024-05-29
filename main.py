@@ -23,13 +23,14 @@ chroma_client = chromadb.HttpClient(host="localhost", port=3000)
 # Initialize OpenAI embeddings function
 embedding_fn = OpenAIEmbeddings(model='text-embedding-3-large')
 
-# Initialize the language model
+# Initialize the language model with specified parameters
 llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
 
-# Initialize Redis chat manager
+# Initialize Redis chat manager for storing and retrieving chat histories
 redis = RedisChatManager(host="localhost", port=6379, db=0)
 
 
+# Function to create a new ChromaDB collection for a user
 def create_collection(user_id):
     collection_name = f"{user_id}_{uuid.uuid4()}"
     chroma_client.create_collection(
@@ -38,16 +39,19 @@ def create_collection(user_id):
     return collection_name
 
 
+# Function to list all ChromaDB collections
 def list_collections():
     collections = chroma_client.list_collections()
     return collections
 
 
+# Function to delete a specific ChromaDB collection by name
 def delete_collection(collection_name: str):
     chroma_client.delete_collection(collection_name)
     return True
 
 
+# Function to delete all ChromaDB collections
 def delete_collections():
     collections = list_collections()
     for collection in collections:
@@ -55,6 +59,7 @@ def delete_collections():
     return True
 
 
+# Function to generate embeddings from a PDF document
 def generate_embeddings(pdf_path):
     loader = PyPDFLoader(pdf_path)
     documents = loader.load()
@@ -64,6 +69,7 @@ def generate_embeddings(pdf_path):
     return chunks, embeddings
 
 
+# Function to save embeddings from a PDF to a ChromaDB collection
 def save_embeddings(user_id: str, book_id: str, pdf_path: str):
     collection_name = f"{user_id}_{uuid.uuid4()}"
     collection = chroma_client.get_or_create_collection(
@@ -81,9 +87,11 @@ def save_embeddings(user_id: str, book_id: str, pdf_path: str):
                 "source": chunk.metadata['source'],
                 "page": chunk.metadata['page']},
             documents=chunk.page_content)
+    print(collection_name)
     return collection_name
 
 
+# Function to run a language model chain with character-specific context
 def llm_characters_chain(query: str, collection_name: str):
     context = Chroma(client=chroma_client,
                      embedding_function=embedding_fn,
@@ -92,7 +100,7 @@ def llm_characters_chain(query: str, collection_name: str):
     retriever = context.as_retriever()
     template = """Answer the question based only on the following context:
     {context}
-    
+
     Question: {question}
     """
     prompt = ChatPromptTemplate.from_template(template)
@@ -106,6 +114,7 @@ def llm_characters_chain(query: str, collection_name: str):
     return response
 
 
+# Function to run a language model chain to summarize information
 def llm_summary_chain(query: str, collection_name: str):
     context = Chroma(client=chroma_client,
                      embedding_function=embedding_fn,
@@ -128,6 +137,7 @@ def llm_summary_chain(query: str, collection_name: str):
     return response
 
 
+# Function to run a language model chain for chat-based interaction
 def llm_chat_chain(query: str, user_id: str, chat_id: str, collection_name: str):
     context = Chroma(client=chroma_client,
                      embedding_function=embedding_fn,
@@ -154,9 +164,11 @@ def llm_chat_chain(query: str, user_id: str, chat_id: str, collection_name: str)
 
 
 if __name__ == "__main__":
+    llm_summary_chain(query="summarise", collection_name="user_001_collection")
+    llm_characters_chain(query="list the main characters and their role", collection_name="user_001_collection")
+    llm_chat_chain(query="what is the context of the story?", user_id="001", chat_id="001", collection_name="user_001_collection")
     # redis.clear_database()
     # redis.user_chats(user_id="001")
-    llm_summary_chain(query="summarise", collection_name="user_001_collection")
     # delete_collections()
     # get_collections()
     # save_embeddings(user_id="001", book_id="001", pdf_path="data/romeo-and-juliet.pdf")
