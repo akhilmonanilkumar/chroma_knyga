@@ -3,8 +3,8 @@ import json
 
 
 class RedisChatManager:
-    def __init__(self, host: str, port: int, db: int):
-        self.client = redis.Redis(host=host, port=port, db=db)
+    def __init__(self, host: str, port: int, db: int, password: str):
+        self.client = redis.Redis(host=host, port=port, db=db, password=password)
 
     def save_chat(self, user_id, chat_id, query, response):
         """
@@ -89,3 +89,6 @@ class RedisChatManager:
 
     def clear_database(self):
         self.client.flushdb()
+
+    def user_chat_keys(self):
+        pass

@@ -17,6 +17,10 @@ load_dotenv('.env')
 # Set the OpenAI API key from the environment variables
 OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
 
+# Set the REDIS key from the environment variables
+REDIS_KEY = os.environ['REDIS_KEY']
+
+
 # Initialize ChromaDB client
 chroma_client = chromadb.HttpClient(host="localhost", port=3000)
 
@@ -24,10 +28,10 @@ chroma_client = chromadb.HttpClient(host="localhost", port=3000)
 embedding_fn = OpenAIEmbeddings(model='text-embedding-3-large')
 
 # Initialize the language model with specified parameters
-llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
 # Initialize Redis chat manager for storing and retrieving chat histories
-redis = RedisChatManager(host="localhost", port=6379, db=0)
+redis = RedisChatManager(host="localhost", port=6379, db=0, password=REDIS_KEY)
 
 
 # Function to create a new ChromaDB collection for a user
@@ -60,7 +64,7 @@ def delete_collections():
 
 
 # Function to generate embeddings from a PDF document
-def generate_embeddings(pdf_path):
+def generate_embeddings_from_pdf(pdf_path: str):
     loader = PyPDFLoader(pdf_path)
     documents = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
@@ -75,7 +79,7 @@ def save_embeddings(user_id: str, book_id: str, pdf_path: str):
     collection = chroma_client.get_or_create_collection(
         collection_name,
         metadata={"hnsw:space": "cosine"})
-    chunks, embeddings = generate_embeddings(pdf_path)
+    chunks, embeddings = generate_embeddings_from_pdf(pdf_path)
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         document_id = f"{book_id}_{i}"
         collection.add(
@@ -164,11 +168,11 @@ def llm_chat_chain(query: str, user_id: str, chat_id: str, collection_name: str)
 
 
 if __name__ == "__main__":
-    llm_summary_chain(query="summarise", collection_name="user_001_collection")
-    llm_characters_chain(query="list the main characters and their role", collection_name="user_001_collection")
-    llm_chat_chain(query="what is the context of the story?", user_id="001", chat_id="001", collection_name="user_001_collection")
+    # llm_summary_chain(query="summarise", collection_name="user_001_collection")
+    # llm_characters_chain(query="list the main characters and their role", collection_name="user_001_collection")
+    # llm_chat_chain(query="what is the context of the story?", user_id="001", chat_id="001", collection_name="user_001_collection")
     # redis.clear_database()
-    # redis.user_chats(user_id="001")
+    redis.user_chats(user_id="001")
     # delete_collections()
     # get_collections()
     # save_embeddings(user_id="001", book_id="001", pdf_path="data/romeo-and-juliet.pdf")
