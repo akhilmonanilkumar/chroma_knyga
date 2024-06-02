@@ -82,7 +82,7 @@ def save_embeddings(user_id: str, book_id: str, pdf_path: str):
     chunks, embeddings = generate_embeddings_from_pdf(pdf_path)
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         document_id = f"{book_id}_{i}"
-        collection.add(
+        collection.upsert(
             ids=document_id,
             embeddings=embedding,
             metadatas={
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     # llm_characters_chain(query="list the main characters and their role", collection_name="user_001_collection")
     # llm_chat_chain(query="what is the context of the story?", user_id="001", chat_id="001", collection_name="user_001_collection")
     # redis.clear_database()
-    redis.user_chats(user_id="001")
+    # redis.user_chats(user_id="001")
     # delete_collections()
     # get_collections()
-    # save_embeddings(user_id="001", book_id="001", pdf_path="data/romeo-and-juliet.pdf")
+    save_embeddings(user_id="001", book_id="001", pdf_path="data/romeo-and-juliet.pdf")
